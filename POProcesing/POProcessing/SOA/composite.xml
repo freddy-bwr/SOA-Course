@@ -15,6 +15,12 @@
           importType="wsdl"/>
   <import namespace="http://xmlns.oracle.com/pcbpel/adapter/file/POProcesing/POProcessing/WriteApprovalResults"
           location="WSDLs/WriteApprovalResults.wsdl" importType="wsdl"/>
+  <import namespace="http://oracle.com/sca/soapservice/CreditCardValidation/validationForCC/getStatusByCC"
+          location="WSDLs/getStatusByCC.wsdl" importType="wsdl"/>
+  <import namespace="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder"
+          location="WSDLs/approveLargeOrder.wsdl" importType="wsdl"/>
+  <import namespace="http://oracle.com/sca/soapservice/CreditCardValidation/validationForCC/getStatusByCC"
+          location="WSDLs/getStatusByCCWrapper.wsdl" importType="wsdl"/>
   <service name="recibePO" ui:wsdlLocation="WSDLs/recibePO.wsdl">
     <interface.wsdl interface="http://oracle.com/sca/soapservice/POProcesing/POProcessing/recibePO#wsdl.interface(execute_ptt)"/>
     <binding.ws port="http://oracle.com/sca/soapservice/POProcesing/POProcessing/recibePO#wsdl.endpoint(recibePO/execute_pt)">
@@ -32,11 +38,36 @@
       <reference name="WriteApprovalResults" ui:wsdlLocation="WSDLs/WriteApprovalResults.wsdl">
         <interface.wsdl interface="http://xmlns.oracle.com/pcbpel/adapter/file/POProcesing/POProcessing/WriteApprovalResults#wsdl.interface(Write_ptt)"/>
       </reference>
+      <reference name="approveLargeOrder.approvelargeorder_client" ui:wsdlLocation="WSDLs/approveLargeOrder.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder#wsdl.interface(approveLargeOrder)"
+                        callbackInterface="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder#wsdl.interface(approveLargeOrderCallback)"/>
+      </reference>
     </componentType>
+  </component>
+  <component name="approveLargeOrder" version="1.1">
+    <implementation.bpel src="BPEL/approveLargeOrder.bpel"/>
+    <componentType>
+      <service name="approvelargeorder_client" ui:wsdlLocation="WSDLs/approveLargeOrder.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder#wsdl.interface(approveLargeOrder)"
+                        callbackInterface="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder#wsdl.interface(approveLargeOrderCallback)"/>
+      </service>
+      <reference name="getCreditCardStatus" ui:wsdlLocation="WSDLs/getStatusByCCWrapper.wsdl">
+        <interface.wsdl interface="http://oracle.com/sca/soapservice/CreditCardValidation/validationForCC/getStatusByCC#wsdl.interface(execute_ptt)"/>
+      </reference>
+    </componentType>
+    <property name="bpel.config.oneWayDeliveryPolicy" type="xs:string" many="false">async.persist</property>
   </component>
   <reference name="WriteApprovalResults" ui:wsdlLocation="WSDLs/WriteApprovalResults.wsdl">
     <interface.wsdl interface="http://xmlns.oracle.com/pcbpel/adapter/file/POProcesing/POProcessing/WriteApprovalResults#wsdl.interface(Write_ptt)"/>
     <binding.jca config="Adapters/WriteApprovalResults_file.jca"/>
+  </reference>
+  <reference name="getCreditCardStatus" ui:wsdlLocation="WSDLs/getStatusByCC.wsdl">
+    <interface.wsdl interface="http://oracle.com/sca/soapservice/CreditCardValidation/validationForCC/getStatusByCC#wsdl.interface(execute_ptt)"/>
+    <binding.ws port="http://oracle.com/sca/soapservice/CreditCardValidation/validationForCC/getStatusByCC#wsdl.endpoint(getStatusByCC/execute_pt)"
+                location="http://caronte-bwr:7001/soa-infra/services/default/validationForCC!1.0/getStatusByCC?WSDL"
+                soapVersion="1.1">
+      <property name="weblogic.wsee.wsat.transaction.flowOption" type="xs:string" many="false">WSDLDriven</property>
+    </binding.ws>
   </reference>
   <wire>
     <source.uri>recibePO</source.uri>
@@ -45,5 +76,13 @@
   <wire>
     <source.uri>routePO/WriteApprovalResults</source.uri>
     <target.uri>WriteApprovalResults</target.uri>
+  </wire>
+  <wire>
+    <source.uri>approveLargeOrder/getCreditCardStatus</source.uri>
+    <target.uri>getCreditCardStatus</target.uri>
+  </wire>
+  <wire>
+    <source.uri>routePO/approveLargeOrder.approvelargeorder_client</source.uri>
+    <target.uri>approveLargeOrder/approvelargeorder_client</target.uri>
   </wire>
 </composite>
