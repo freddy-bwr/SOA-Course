@@ -1,2 +1,13 @@
 <?xml version = '1.0' encoding = 'UTF-8'?>
-<Faults/>
+<Faults>
+   <Fault>
+      <severity>warning</severity>
+      <loc>/ns:composite/ns:wire/ns:target.uri[.='routePO/routePO']</loc>
+      <line>74</line>
+      <col>17</col>
+      <file>/Users/farrokh/Documents/Workspaces/BWR/SOA-Course/POProcesing/POProcessing/SOA/composite.xml</file>
+      <name>/Users/farrokh/Documents/Workspaces/BWR/SOA-Course/POProcesing/POProcessing/SOA/composite.xml</name>
+      <fix/>
+      <msg>Fallo de validación de esquema con la excepción "null"</msg>
+   </Fault>
+</Faults>
