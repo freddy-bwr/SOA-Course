@@ -2,8 +2,28 @@
 <Faults>
    <Fault>
       <severity>warning</severity>
+      <loc/>
+      <line/>
+      <col/>
+      <file>HumanTasks/ManualPOApproval.task</file>
+      <name>HumanTasks/ManualPOApproval.task</name>
+      <fix/>
+      <msg>Task owner not specified</msg>
+   </Fault>
+   <Fault>
+      <severity>warning</severity>
+      <loc/>
+      <line/>
+      <col/>
+      <file>HumanTasks/ManualPOApproval.task</file>
+      <name>HumanTasks/ManualPOApproval.task</name>
+      <fix/>
+      <msg>Error assignee not specified</msg>
+   </Fault>
+   <Fault>
+      <severity>warning</severity>
       <loc>/ns:composite/ns:wire/ns:target.uri[.='routePO/routePO']</loc>
-      <line>74</line>
+      <line>90</line>
       <col>17</col>
       <file>/Users/farrokh/Documents/Workspaces/BWR/SOA-Course/POProcesing/POProcessing/SOA/composite.xml</file>
       <name>/Users/farrokh/Documents/Workspaces/BWR/SOA-Course/POProcesing/POProcessing/SOA/composite.xml</name>
