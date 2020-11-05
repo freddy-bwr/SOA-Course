@@ -24,6 +24,20 @@
           </invoke>
         </action>
       </case>
+      <case executionType="sequential" name="FulfillmentProcess.fulfillmentprocess_client.process">
+        <condition language="xpath">
+          <expression>($in.InputMessagePart/inp1:PurchaseOrder/inp1:quantity*$in.InputMessagePart/inp1:PurchaseOrder/inp1:price) &lt; 1000</expression>
+        </condition>
+        <action>
+          <transform>
+            <part name="$out.payload"
+                  function="xslt(../Transformations/PurchaseOrder_To_Fulfillment.xsl, $in.InputMessagePart)"/>
+          </transform>
+          <invoke reference="FulfillmentProcess.fulfillmentprocess_client" operation="process">
+            <onCallback operation="processResponse"/>
+          </invoke>
+        </action>
+      </case>
       <case executionType="parallel" name="WriteApprovalResults.Write">
         <condition language="xpath">
           <expression>($in.InputMessagePart/inp1:PurchaseOrder/inp1:price * $in.InputMessagePart/inp1:PurchaseOrder/inp1:quantity) &lt; 1000</expression>

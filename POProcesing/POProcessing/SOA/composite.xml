@@ -25,6 +25,12 @@
           location="oramds:/soa/shared/workflow/TaskServiceInterface.wsdl" importType="wsdl"/>
   <import namespace="http://xmlns.oracle.com/ManualApproval/ManualApproval_DecisionService_1"
           location="WSDLs/ManualApproval_DecisionService_1.wsdl" importType="wsdl"/>
+  <import namespace="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess"
+          location="WSDLs/FulfillmentProcess.wsdl" importType="wsdl"/>
+  <import namespace="http://xmlns.oracle.com/FulfillmentRules/OracleRulesFulfillment"
+          location="WSDLs/OracleRulesFulfillment.wsdl" importType="wsdl"/>
+  <import namespace="http://xmlns.oracle.com/FulfillmentRules/OracleRulesFulfillment"
+          location="WSDLs/OracleRulesFulfillmentWrapper.wsdl" importType="wsdl"/>
   <service name="recibePO" ui:wsdlLocation="WSDLs/recibePO.wsdl">
     <interface.wsdl interface="http://oracle.com/sca/soapservice/POProcesing/POProcessing/recibePO#wsdl.interface(execute_ptt)"/>
     <binding.ws port="http://oracle.com/sca/soapservice/POProcesing/POProcessing/recibePO#wsdl.endpoint(recibePO/execute_pt)">
@@ -45,6 +51,10 @@
       <reference name="approveLargeOrder.approvelargeorder_client" ui:wsdlLocation="WSDLs/approveLargeOrder.wsdl">
         <interface.wsdl interface="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder#wsdl.interface(approveLargeOrder)"
                         callbackInterface="http://xmlns.oracle.com/POProcesing/POProcessing/approveLargeOrder#wsdl.interface(approveLargeOrderCallback)"/>
+      </reference>
+      <reference name="FulfillmentProcess.fulfillmentprocess_client" ui:wsdlLocation="WSDLs/FulfillmentProcess.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess#wsdl.interface(FulfillmentProcess)"
+                        callbackInterface="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess#wsdl.interface(FulfillmentProcessCallback)"/>
       </reference>
     </componentType>
   </component>
@@ -67,6 +77,10 @@
                  ui:wsdlLocation="WSDLs/ManualApproval_DecisionService_1.wsdl">
         <interface.wsdl interface="http://xmlns.oracle.com/ManualApproval/ManualApproval_DecisionService_1#wsdl.interface(IDecisionService)"/>
       </reference>
+      <reference name="FulfillmentProcess.fulfillmentprocess_client" ui:wsdlLocation="WSDLs/FulfillmentProcess.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess#wsdl.interface(FulfillmentProcess)"
+                        callbackInterface="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess#wsdl.interface(FulfillmentProcessCallback)"/>
+      </reference>
     </componentType>
     <property name="bpel.config.oneWayDeliveryPolicy" type="xs:string" many="false">async.persist</property>
   </component>
@@ -84,6 +98,28 @@
     <componentType>
       <service name="ManualApproval_DecisionService_1" ui:wsdlLocation="WSDLs/ManualApproval_DecisionService_1.wsdl">
         <interface.wsdl interface="http://xmlns.oracle.com/ManualApproval/ManualApproval_DecisionService_1#wsdl.interface(IDecisionService)"/>
+      </service>
+    </componentType>
+  </component>
+  <component name="FulfillmentProcess" version="1.1">
+    <implementation.bpel src="BPEL/FulfillmentProcess.bpel"/>
+    <componentType>
+      <service name="fulfillmentprocess_client" ui:wsdlLocation="WSDLs/FulfillmentProcess.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess#wsdl.interface(FulfillmentProcess)"
+                        callbackInterface="http://xmlns.oracle.com/POProcesing/POProcessing/FulfillmentProcess#wsdl.interface(FulfillmentProcessCallback)"/>
+      </service>
+      <reference name="FulfillmentRules.OracleRulesFulfillment"
+                 ui:wsdlLocation="WSDLs/OracleRulesFulfillmentWrapper.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/FulfillmentRules/OracleRulesFulfillment#wsdl.interface(IDecisionService)"/>
+      </reference>
+    </componentType>
+    <property name="bpel.config.oneWayDeliveryPolicy" type="xs:string" many="false">async.persist</property>
+  </component>
+  <component name="FulfillmentRules">
+    <implementation.decision src="FulfillmentRules.decs"/>
+    <componentType>
+      <service name="OracleRulesFulfillment" ui:wsdlLocation="WSDLs/OracleRulesFulfillment.wsdl">
+        <interface.wsdl interface="http://xmlns.oracle.com/FulfillmentRules/OracleRulesFulfillment#wsdl.interface(IDecisionService)"/>
       </service>
     </componentType>
   </component>
@@ -122,5 +158,17 @@
   <wire>
     <source.uri>approveLargeOrder/ManualApproval.ManualApproval_DecisionService_1</source.uri>
     <target.uri>ManualApproval/ManualApproval_DecisionService_1</target.uri>
+  </wire>
+  <wire>
+    <source.uri>FulfillmentProcess/FulfillmentRules.OracleRulesFulfillment</source.uri>
+    <target.uri>FulfillmentRules/OracleRulesFulfillment</target.uri>
+  </wire>
+  <wire>
+    <source.uri>approveLargeOrder/FulfillmentProcess.fulfillmentprocess_client</source.uri>
+    <target.uri>FulfillmentProcess/fulfillmentprocess_client</target.uri>
+  </wire>
+  <wire>
+    <source.uri>routePO/FulfillmentProcess.fulfillmentprocess_client</source.uri>
+    <target.uri>FulfillmentProcess/fulfillmentprocess_client</target.uri>
   </wire>
 </composite>
