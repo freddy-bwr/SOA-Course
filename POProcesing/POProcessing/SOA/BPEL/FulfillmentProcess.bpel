@@ -169,7 +169,6 @@
                             operation="Produce_Message"/>
                 </sequence>
             </case>
-            <otherwise/>
         </switch>
         <!-- 
           Asynchronous callback to the requester. (Note: the callback location and correlation id is transparently handled using WS-addressing.)
