@@ -18,7 +18,19 @@
          xmlns:bpws="http://schemas.xmlsoap.org/ws/2003/03/business-process/"
          xmlns:ns1="http://xmlns.oracle.com/FulfillmentRules/OracleRulesFulfillment"
          xmlns:bpel2="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
-         xmlns:ns2="http://xmlns.oracle.com/ns/fulfillment" xmlns:ns3="http://xmlns.oracle.com/bpel">
+         xmlns:ns2="http://xmlns.oracle.com/ns/fulfillment" xmlns:ns3="http://xmlns.oracle.com/bpel"
+         xmlns:ns4="http://xmlns.oracle.com/pcbpel/adapter/jms/POProcesing/POProcessing/JMS_FedEx"
+         xmlns:ns5="http://xmlns.oracle.com/pcbpel/adapter/jms/POProcesing/POProcessing/JMS_UPS"
+         xmlns:ns6="http://xmlns.oracle.com/pcbpel/adapter/jms/POProcesing/POProcessing/JMS_USPS"
+         xmlns:oraext="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.ExtFunc"
+         xmlns:bpm="http://xmlns.oracle.com/bpmn20/extensions"
+         xmlns:xp20="http://www.oracle.com/XSL/Transform/java/oracle.tip.pc.services.functions.Xpath20"
+         xmlns:ess="http://xmlns.oracle.com/scheduler" xmlns:hwf="http://xmlns.oracle.com/bpel/workflow/xpath"
+         xmlns:xref="http://www.oracle.com/XSL/Transform/java/oracle.tip.xref.xpath.XRefXPathFunctions"
+         xmlns:dvm="http://www.oracle.com/XSL/Transform/java/oracle.tip.dvm.LookupValue"
+         xmlns:xdk="http://schemas.oracle.com/bpel/extension/xpath/function/xdk"
+         xmlns:ids="http://xmlns.oracle.com/bpel/services/IdentityService/xpath"
+         xmlns:ldap="http://schemas.oracle.com/xpath/extension/ldap">
 
     <!-- 
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,6 +54,9 @@
         <partnerLink name="fulfillmentprocess_client" partnerLinkType="client:FulfillmentProcess" myRole="FulfillmentProcessProvider" partnerRole="FulfillmentProcessRequester"/>
         <partnerLink name="FulfillmentRules.OracleRulesFulfillment"
                      partnerLinkType="ns1:FulfillmentRules.OracleRulesFulfillment" partnerRole="IDecisionService"/>
+        <partnerLink name="JMS_FedEx" partnerLinkType="ns4:Produce_Message_plt" partnerRole="Produce_Message_role"/>
+        <partnerLink name="JMS_UPS" partnerLinkType="ns5:Produce_Message_plt" partnerRole="Produce_Message_role"/>
+        <partnerLink name="JMS_USPS" partnerLinkType="ns6:Produce_Message_plt" partnerRole="Produce_Message_role"/>
     </partnerLinks>
 
     <!-- 
@@ -56,6 +71,9 @@
 
         <!-- Reference to the message that will be sent back to the requester during callback -->
         <variable name="outputVariable" messageType="client:FulfillmentProcessResponseMessage"/>
+        <variable name="Invoke_USPS_Produce_Message_InputVariable" messageType="ns6:Produce_Message_msg"/>
+        <variable name="Invoke_UPS_Produce_Message_InputVariable" messageType="ns5:Produce_Message_msg"/>
+        <variable name="Invoke_FedEx_Produce_Message_InputVariable" messageType="ns4:Produce_Message_msg"/>
     </variables>
 
     <!-- 
@@ -68,7 +86,7 @@
     <sequence name="main">
         <!-- Receive input from requestor. (Note: This maps to operation defined in FulfillmentProcess.wsdl) -->
         <receive name="receiveInput" partnerLink="fulfillmentprocess_client" portType="client:FulfillmentProcess" operation="process" variable="inputVariable" createInstance="yes"/>
-        <scope name="Rule1">
+        <scope name="Rule_Delivery">
             <bpelx:annotation>
                 <bpelx:pattern patternName="bpelx:decide"/>
             </bpelx:annotation>
@@ -102,6 +120,57 @@
                 </assign>
             </sequence>
         </scope>
+        <switch name="Switch1">
+            <case condition="bpws:getVariableData('outputVariable','payload','/ns2:CarrierSelection/ns2:carrier')= 'FedEx'">
+                <sequence name="Sequence4">
+                    <assign name="Assign_FedEx">
+                        <copy>
+                            <from bpelx:language="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"
+                                  variable="inputVariable" part="payload" query="/ns2:Fulfillment/ns2:total"/>
+                            <to bpelx:language="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"
+                                variable="Invoke_FedEx_Produce_Message_InputVariable" part="body"
+                                query="/ns2:Fulfillment/ns2:total"/>
+                        </copy>
+                    </assign>
+                    <invoke name="Invoke_FedEx" partnerLink="JMS_FedEx"
+                            inputVariable="Invoke_FedEx_Produce_Message_InputVariable"
+                            portType="ns4:Produce_Message_ptt" operation="Produce_Message"/>
+                </sequence>
+            </case>
+            <case condition="bpws:getVariableData('outputVariable','payload','/ns2:CarrierSelection/ns2:carrier')= 'UPS'">
+                <sequence name="Sequence3">
+                    <assign name="Assign_UPS">
+                        <copy>
+                            <from bpelx:language="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"
+                                  variable="inputVariable" part="payload" query="/ns2:Fulfillment/ns2:total"/>
+                            <to bpelx:language="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"
+                                variable="Invoke_UPS_Produce_Message_InputVariable" part="body"
+                                query="/ns2:Fulfillment/ns2:total"/>
+                        </copy>
+                    </assign>
+                    <invoke name="Invoke_UPS" partnerLink="JMS_UPS"
+                            inputVariable="Invoke_UPS_Produce_Message_InputVariable" portType="ns5:Produce_Message_ptt"
+                            operation="Produce_Message"/>
+                </sequence>
+            </case>
+            <case condition="bpws:getVariableData('outputVariable','payload','/ns2:CarrierSelection/ns2:carrier')= 'USPS'">
+                <sequence name="Sequence2">
+                    <assign name="Assign_USPS">
+                        <copy>
+                            <from bpelx:language="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"
+                                  variable="inputVariable" part="payload" query="/ns2:Fulfillment/ns2:total"/>
+                            <to bpelx:language="urn:oasis:names:tc:wsbpel:2.0:sublang:xpath1.0"
+                                variable="Invoke_USPS_Produce_Message_InputVariable" part="body"
+                                query="/ns2:Fulfillment/ns2:total"/>
+                        </copy>
+                    </assign>
+                    <invoke name="Invoke_USPS" partnerLink="JMS_USPS"
+                            inputVariable="Invoke_USPS_Produce_Message_InputVariable" portType="ns6:Produce_Message_ptt"
+                            operation="Produce_Message"/>
+                </sequence>
+            </case>
+            <otherwise/>
+        </switch>
         <!-- 
           Asynchronous callback to the requester. (Note: the callback location and correlation id is transparently handled using WS-addressing.)
         -->
